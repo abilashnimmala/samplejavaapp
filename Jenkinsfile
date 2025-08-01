@@ -29,9 +29,7 @@ pipeline {
         stage('Regression Test') {
             steps {
                 echo "🔄 Running Regression Tests..."
-                // Add your regression test commands here
-                // Example: sh 'mvn verify -P regression' if you have a regression profile
-                sh 'mvn verify'  
+                sh 'mvn verify'
             }
         }
 
@@ -42,7 +40,7 @@ pipeline {
             }
             post {
                 always {
-                    recordIssues tools: [pmdParser(pattern: 'target/pmd.xml')]
+                    recordIssues tools: [pmd(pattern: 'target/pmd.xml')]
                 }
             }
         }
@@ -69,12 +67,11 @@ pipeline {
         stage('Copy Artifact to Jenkins Server') {
             steps {
                 echo "📋 Copying built package to Jenkins workspace..."
-                // Adjust the jar name/path below as necessary
                 sh 'cp target/*.jar $WORKSPACE'
             }
         }
     }
-  
+
     post {
         success {
             echo '✅ Build, test, and package completed successfully!'
