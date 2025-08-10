@@ -1,84 +1,79 @@
 pipeline {
     agent any
-
-    environment {
-        JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-amd64"
-        MAVEN_HOME = "/opt/apache-maven-3.9.11"
-        PATH = "${JAVA_HOME}/bin:${MAVEN_HOME}/bin:${env.PATH}"
+    tools {
+        jdk 'Java17'          // matches your Jenkins Global Tool Config name for Java 17
+        maven 'Maven-3.9.3'   // matches your Jenkins Maven installation name
     }
-
+    options {
+        timestamps()
+        ansiColor('xterm')
+    }
     stages {
-        stage('Checkout Code') {
+        stage('Verify Java and Maven') {
             steps {
-                git url: 'https://github.com/abilashnimmala/samplejavaapp.git', branch: 'master'
+                echo 'Checking Java and Maven versions on Jenkins agent...'
+                sh 'java -version'
+                sh 'mvn -version'
+                sh 'echo JAVA_HOME=$JAVA_HOME'
+                sh 'echo M2_HOME=$M2_HOME'
             }
         }
-
+        stage('Compile') {
+            steps {
+                echo 'Compiling...'
+                git url: 'https://github.com/abilashnimmala/samplejavaapp.git'
+                sh 'mvn compile'
+            }
+        }
+        stage('Code Review - PMD') {
+            steps {
+                echo 'Running PMD code review...'
+                sh 'mvn -P metrics pmd:pmd'
+            }
+            post {
+                success {
+                    recordIssues enabledForFailure: true, tool: pmdParser(pattern: '**/target/pmd.xml')
+                }
+            }
+        }
         stage('Unit Test') {
             steps {
-                echo "🧪 Running Unit Tests..."
+                echo 'Running unit tests...'
                 sh 'mvn test'
             }
             post {
-                always {
+                success {
                     junit 'target/surefire-reports/*.xml'
                 }
             }
         }
-
-        stage('Regression Test') {
-            steps {
-                echo "🔄 Running Regression Tests..."
-                sh 'mvn verify'
-            }
-        }
-
-        stage('Static Code Analysis - PMD') {
-            steps {
-                echo "🔍 Running PMD for code analysis..."
-                sh 'mvn pmd:pmd'
-            }
-            post {
-                always {
-                    recordIssues tools: [pmd(pattern: 'target/pmd.xml')]
-                }
-            }
-        }
-
         stage('Code Coverage') {
             steps {
-                echo "📊 Running Code Coverage using JaCoCo..."
-                sh 'mvn jacoco:prepare-agent test jacoco:report'
+                echo 'Running code coverage analysis...'
+                sh 'mvn verify'
             }
             post {
-                always {
-                    jacoco execPattern: 'target/jacoco.exec'
+                success {
+                    jacoco buildOverBuild: true, deltaBranchCoverage: '20', deltaClassCoverage: '20', deltaComplexityCoverage: '20', deltaInstructionCoverage: '20', deltaLineCoverage: '20', deltaMethodCoverage: '20'
                 }
             }
         }
-
         stage('Package') {
             steps {
-                echo "📦 Packaging the application..."
+                echo 'Packaging application...'
                 sh 'mvn package'
             }
         }
-
-        stage('Copy Artifact to Jenkins Server') {
-            steps {
-                echo "📋 Copying built package to Jenkins workspace..."
-                sh 'cp target/*.jar $WORKSPACE'
-            }
-        }
     }
-
     post {
+        always {
+            echo 'Pipeline finished.'
+        }
         success {
-            echo '✅ Build, test, and package completed successfully!'
+            echo 'Pipeline succeeded!'
         }
         failure {
-            echo '❌ Build failed. Check logs for details.'
+            echo 'Pipeline failed.'
         }
     }
 }
-
