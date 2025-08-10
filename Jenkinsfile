@@ -1,12 +1,12 @@
 pipeline {
     agent any
     tools {
-        jdk 'Java17'          // matches your Jenkins Global Tool Config name for Java 17
-        maven 'Maven-3.9.3'   // matches your Jenkins Maven installation name
+        jdk 'Java 17'          // Exact name from Jenkins Global Tool Configuration
+        maven 'Maven-3.9.3'    // Exact name from Jenkins Global Tool Configuration
     }
     options {
         timestamps()
-        ansiColor('xterm')
+        // ansiColor('xterm')  // Removed/commented out due to plugin/version incompatibility
     }
     stages {
         stage('Verify Java and Maven') {
