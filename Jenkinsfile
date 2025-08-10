@@ -4,6 +4,11 @@ pipeline {
         jdk 'Java 17'          // Exact name from Jenkins Global Tool Configuration
         maven 'Maven-3.9.3'    // Exact name from Jenkins Global Tool Configuration
     }
+    environment {
+        JAVA_HOME = '/usr/lib/jvm/java-17-openjdk-amd64'
+        M2_HOME = '/opt/apache-maven-3.9.3'
+        PATH = "${JAVA_HOME}/bin:${M2_HOME}/bin:${env.PATH}"
+    }
     options {
         timestamps()
         // ansiColor('xterm')  // Removed/commented out due to plugin/version incompatibility
