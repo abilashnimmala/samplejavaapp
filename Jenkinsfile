@@ -1,39 +1,50 @@
 pipeline {
     agent any
     tools {
-        jdk 'Java 17'          // Exact name from Jenkins Global Tool Configuration
-        maven 'Maven-3.9.3'    // Exact name from Jenkins Global Tool Configuration
+        jdk 'Java 17'
+        maven 'Maven-3.9.3'
     }
     environment {
         JAVA_HOME = '/usr/lib/jvm/java-17-openjdk-amd64'
         M2_HOME = '/opt/apache-maven-3.9.3'
-        PATH = "${JAVA_HOME}/bin:${M2_HOME}/bin:${env.PATH}"
     }
     options {
         timestamps()
-        // ansiColor('xterm')  // Removed/commented out due to plugin/version incompatibility
+        // ansiColor('xterm')
     }
     stages {
         stage('Verify Java and Maven') {
             steps {
                 echo 'Checking Java and Maven versions on Jenkins agent...'
-                sh 'java -version'
-                sh 'mvn -version'
-                sh 'echo JAVA_HOME=$JAVA_HOME'
-                sh 'echo M2_HOME=$M2_HOME'
+                sh '''
+                   export JAVA_HOME=${JAVA_HOME}
+                   export PATH=${JAVA_HOME}/bin:${M2_HOME}/bin:$PATH
+                   java -version
+                   mvn -version
+                   echo JAVA_HOME=$JAVA_HOME
+                   echo M2_HOME=$M2_HOME
+                '''
             }
         }
         stage('Compile') {
             steps {
                 echo 'Compiling...'
                 git url: 'https://github.com/abilashnimmala/samplejavaapp.git'
-                sh 'mvn compile'
+                sh '''
+                   export JAVA_HOME=${JAVA_HOME}
+                   export PATH=${JAVA_HOME}/bin:${M2_HOME}/bin:$PATH
+                   mvn compile
+                '''
             }
         }
         stage('Code Review - PMD') {
             steps {
                 echo 'Running PMD code review...'
-                sh 'mvn -P metrics pmd:pmd'
+                sh '''
+                   export JAVA_HOME=${JAVA_HOME}
+                   export PATH=${JAVA_HOME}/bin:${M2_HOME}/bin:$PATH
+                   mvn -P metrics pmd:pmd
+                '''
             }
             post {
                 success {
@@ -44,7 +55,11 @@ pipeline {
         stage('Unit Test') {
             steps {
                 echo 'Running unit tests...'
-                sh 'mvn test'
+                sh '''
+                   export JAVA_HOME=${JAVA_HOME}
+                   export PATH=${JAVA_HOME}/bin:${M2_HOME}/bin:$PATH
+                   mvn test
+                '''
             }
             post {
                 success {
@@ -55,7 +70,11 @@ pipeline {
         stage('Code Coverage') {
             steps {
                 echo 'Running code coverage analysis...'
-                sh 'mvn verify'
+                sh '''
+                   export JAVA_HOME=${JAVA_HOME}
+                   export PATH=${JAVA_HOME}/bin:${M2_HOME}/bin:$PATH
+                   mvn verify
+                '''
             }
             post {
                 success {
@@ -66,7 +85,11 @@ pipeline {
         stage('Package') {
             steps {
                 echo 'Packaging application...'
-                sh 'mvn package'
+                sh '''
+                   export JAVA_HOME=${JAVA_HOME}
+                   export PATH=${JAVA_HOME}/bin:${M2_HOME}/bin:$PATH
+                   mvn package
+                '''
             }
         }
     }
